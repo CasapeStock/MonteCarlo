@@ -1,10 +1,16 @@
-kivy==2.2.1
-yfinance==0.2.33
-numpy==1.24.3
-pandas==2.0.1
-matplotlib==3.7.1
-buildozer==1.5.0  # For Android packaging
-
 # Web Server Dependencies
-flask==2.3.3
-gunicorn==20.1.0  # Production WSGI server
+flask==3.0.2
+flask-cors==4.0.1
+gunicorn==23.0.0
+
+# Data Science and Simulation
+yfinance==0.2.52
+numpy==2.2.2
+pandas==2.2.3
+matplotlib==3.10.0
+scipy==1.15.1
+requests==2.32.0
+
+# Optional: For future mobile development
+# kivy==2.2.1
+# buildozer==1.5.0
