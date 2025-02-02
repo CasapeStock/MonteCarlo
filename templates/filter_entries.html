@@ -1,0 +1,395 @@
+{% extends "base.html" %}
+
+{% block head %}
+{{ super() }}
+<style>
+    .select2-search__field {
+        width: 100% !important;
+    }
+    .stock-use-section label {
+        color: black;
+        font-weight: bold;
+    }
+</style>
+{% endblock head %}
+
+{% block styles %}
+{{ super() }}
+<style>
+.filter-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px;
+    background-color: rgba(0,0,0,0.7);
+    border-radius: 10px;
+}
+.filter-form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+.form-group label {
+    margin-bottom: 5px;
+    color: #ddd;
+    font-size: 1rem;
+}
+.form-control {
+    white-space: normal;
+    word-wrap: break-word;
+    text-overflow: clip;
+    overflow: visible;
+    line-height: 2;
+    padding: 12px;
+    min-height: 50px;
+    background-color: #222;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 4px;
+    font-size: 1rem;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, white 50%), linear-gradient(135deg, white 50%, transparent 50%);
+    background-position: calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px);
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+}
+.form-control:focus {
+    outline: none;
+    border-color: #4cff4c;
+    box-shadow: 0 0 10px rgba(76,255,76,0.3);
+}
+.form-control option {
+    white-space: normal;
+    word-wrap: break-word;
+    text-overflow: clip;
+    overflow: visible;
+    padding: 8px;
+    min-height: 30px;
+}
+/* Scrollbar for long dropdowns */
+.form-control {
+    max-height: 300px;
+    overflow-y: auto;
+}
+/* Custom scrollbar */
+.form-control::-webkit-scrollbar {
+    width: 12px;
+}
+.form-control::-webkit-scrollbar-track {
+    background: #333;
+}
+.form-control::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 6px;
+}
+.form-control::-webkit-scrollbar-thumb:hover {
+    background: #4cff4c;
+}
+.form-control[multiple], .form-control[size] {
+    height: auto;
+    min-height: 200px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="filter-container">
+    <h1>{% if show_used %}Used{% else %}Stock{% endif %} Entries</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message | safe }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    {% if session.get('deleted_entries') %}
+    <div class="undo-section">
+        <h3>Recently Deleted Entries</h3>
+        <div class="undo-entries">
+            {% for entry in session['deleted_entries'] %}
+            <form action="{{ url_for('undo_delete') }}" method="POST" class="undo-form">
+                <div class="undo-entry">
+                    <span>ID: {{ entry.id }} | Profile: {{ entry.profile }} | Quantity: {{ entry.quantity }}</span>
+                    <button type="submit" class="btn btn-undo">Undo</button>
+                </div>
+            </form>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="POST" class="filter-form">
+        <div class="form-group">
+            <label for="steel_type">Steel Type</label>
+            <select name="steel_type" id="steel_type" class="form-control">
+                <option value="">All Steel Types</option>
+                
+                <!-- Structural Steels -->
+                <optgroup label="Structural Steels (EN 10025-2)">
+                    <option value="S235JR">S235 JR</option>
+                    <option value="S235J0">S235 J0</option>
+                    <option value="S235J2">S235 J2</option>
+                    <option value="S275JR">S275 JR</option>
+                    <option value="S275J0">S275 J0</option>
+                    <option value="S275J2">S275 J2</option>
+                    <option value="S355JR">S355 JR</option>
+                    <option value="S355J0">S355 J0</option>
+                    <option value="S355J2">S355 J2</option>
+                </optgroup>
+                
+                <!-- Weathering Steels -->
+                <optgroup label="Weathering Steels (EN 10025-5)">
+                    <option value="S235J0W">S235 J0W</option>
+                    <option value="S355J0WP">S355 J0WP</option>
+                    <option value="S355J2WP">S355 J2WP</option>
+                </optgroup>
+                
+                <!-- Normalized Steels -->
+                <optgroup label="Normalized Steels (EN 10025-3)">
+                    <option value="S275N">S275 N</option>
+                    <option value="S355N">S355 N</option>
+                    <option value="S420N">S420 N</option>
+                    <option value="S460N">S460 N</option>
+                </optgroup>
+                
+                <!-- Quenched and Tempered Steels -->
+                <optgroup label="Quenched and Tempered Steels (EN 10025-4)">
+                    <option value="S275Q">S275 Q</option>
+                    <option value="S355Q">S355 Q</option>
+                    <option value="S420Q">S420 Q</option>
+                    <option value="S460Q">S460 Q</option>
+                </optgroup>
+                
+                <!-- High Strength Low Alloy Steels -->
+                <optgroup label="High Strength Low Alloy Steels">
+                    <option value="S355M">S355 M</option>
+                    <option value="S420M">S420 M</option>
+                    <option value="S460M">S460 M</option>
+                </optgroup>
+                
+                <!-- Other option -->
+                <option value="Other">Other Steel Type</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="start_date">Start Date</label>
+            <input type="date" name="start_date" id="start_date" class="form-control">
+        </div>
+        
+        <div class="form-group">
+            <label for="end_date">End Date</label>
+            <input type="date" name="end_date" id="end_date" class="form-control">
+        </div>
+        
+        <div class="form-group">
+            <label for="min_quantity">Profile Type</label>
+            <select name="min_quantity" id="min_quantity" class="form-control">
+                <option value="">All Profile Types</option>
+                {% for profile in steel_profiles %}
+                    <option value="{{ profile }}">{{ profile }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="max_quantity">Work Number</label>
+            <input type="text" name="max_quantity" id="max_quantity" class="form-control" 
+                   placeholder="Enter Work Number">
+        </div>
+        
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+            <a href="{{ url_for('filter_entries') }}" class="btn btn-secondary">Reset Filters</a>
+            <button type="button" onclick="toggleGreenBackground()" class="background-toggle">Toggle Green Background</button>
+        </div>
+    </form>
+    
+    {% if entries %}
+    <table class="entries-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Profile</th>
+                <th>Quantity</th>
+                <th>Length</th>
+                <th>Steel Type</th>
+                <th>Stock Reference</th>
+                <th>Work Number</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+            <tr>
+                <td>{{ entry.date }}</td>
+                <td>{{ entry.profile }}</td>
+                <td>{{ entry.quantity }}</td>
+                <td>{{ entry.length }}</td>
+                <td>{{ entry.steel_type }}</td>
+                <td>{{ entry.stock_reference }}</td>
+                <td>{{ entry.work_number }}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#useStockModal{{ entry.id }}">
+                            Use
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEntry({{ entry.id }})">
+                            Delete
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No entries found.</p>
+    {% endif %}
+
+    <!-- New section for manual stock use -->
+    <div class="stock-use-section mt-4">
+        <h3>Use Stock</h3>
+        <form action="{{ url_for('use_stock') }}" method="POST" class="stock-use-form">
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                    <label>Use Stock</label>
+                    <input type="text" name="profile" id="use-stock-profile" class="form-control" readonly>
+                </div>
+                <div class="form-group col-md-3">
+                    <label>Previous Work Number</label>
+                    <input type="text" name="previous_work_number" id="use-stock-previous-work" class="form-control" readonly>
+                </div>
+                <div class="form-group col-md-3">
+                    <label>Newest Work Number</label>
+                    <input type="text" name="newest_work_number" class="form-control" required>
+                </div>
+                <div class="form-group col-md-3">
+                    <label>Quantity Used</label>
+                    <input type="number" name="quantity_used" class="form-control" min="0" step="0.01" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Stock Use</button>
+        </form>
+    </div>
+
+    {% for entry in entries %}
+    <div class="modal fade" id="useStockModal{{ entry.id }}" tabindex="-1" role="dialog" data-entry-id="{{ entry.id }}">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Use Stock</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="{{ url_for('use_stock', entry_id=entry.id) }}" method="POST">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <input type="hidden" name="profile" value="{{ entry.profile }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Previous Work Number</label>
+                            <input type="text" name="previous_work_number" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Newest Work Number</label>
+                            <input type="text" name="newest_work_number" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Quantity Used</label>
+                            <input type="number" name="quantity_used" class="form-control" 
+                                   min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Use Stock</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock content %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ensure entries is defined globally
+        var entries = {{ entries | tojson | safe }};
+
+        // Function to find the most recent work number for a given profile
+        function findMostRecentWorkNumber(profile) {
+            var matchingEntries = entries.filter(function(entry) {
+                return entry.profile === profile;
+            });
+
+            if (matchingEntries.length > 0) {
+                matchingEntries.sort(function(a, b) {
+                    return new Date(b.date) - new Date(a.date);
+                });
+
+                return matchingEntries[0].work_number || '';
+            }
+
+            return '';
+        }
+
+        // Get all Use Stock buttons and their corresponding modals
+        entries.forEach(function(entryData) {
+            // Find the button and modal for this specific entry
+            var button = document.querySelector(`[data-target="#useStockModal${entryData.id}"]`);
+            var modal = document.querySelector(`#useStockModal${entryData.id}`);
+
+            if (button && modal) {
+                button.addEventListener('click', function(event) {
+                    // Prevent default action
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    // Reset and update the form
+                    var form = modal.querySelector('form');
+                    form.reset();
+                    
+                    // Set max quantity
+                    var quantityInput = form.querySelector('input[name="quantity_used"]');
+                    quantityInput.setAttribute('max', entryData.quantity);
+                    
+                    // Initialize profile input
+                    var profileInput = form.querySelector('input[name="profile"]');
+                    profileInput.value = entryData.profile;
+                    
+                    var previousWorkNumberInput = form.querySelector('input[name="previous_work_number"]');
+                    var modalTitle = modal.querySelector('.modal-title');
+                    
+                    // Update modal title with the profile
+                    modalTitle.textContent = `Use Stock: ${entryData.profile}`;
+                    
+                    // Find and set the most recent work number for this profile
+                    var mostRecentWorkNumber = findMostRecentWorkNumber(entryData.profile);
+                    previousWorkNumberInput.value = mostRecentWorkNumber;
+                    
+                    // Manually show the modal
+                    $(modal).modal('show');
+                });
+            }
+        });
+    });
+</script>
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+{% endblock scripts %}

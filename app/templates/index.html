@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Avaliando Ações - Monte Carlo Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #2a2a2a;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 80%;
+            max-width: 800px;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #444;
+            background-color: #333;
+            color: #fff;
+        }
+        button {
+            cursor: pointer;
+            background-color: #4a4a4a;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        #simulation-plot {
+            max-width: 100%;
+            height: auto;
+        }
+        #percentile-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #percentile-table th, #percentile-table td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Avaliando Ações - Monte Carlo Simulation</h1>
+        <form id="simulation-form">
+            <input type="text" id="ticker" placeholder="Enter Stock Ticker (e.g., SOFI)" required>
+            <button type="submit">Simulate</button>
+        </form>
+        <div id="results">
+            <img id="simulation-plot" style="display:none;">
+            <table id="percentile-table" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>Percentile</th>
+                        <th>Stock Price</th>
+                    </tr>
+                </thead>
+                <tbody id="percentile-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('simulation-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const ticker = document.getElementById('ticker').value;
+            
+            fetch('/simulate', {
+                method: 'POST',
+                body: new FormData(e.target)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                
+                // Display plot
+                const plotImg = document.getElementById('simulation-plot');
+                plotImg.src = 'data:image/png;base64,' + data.plot;
+                plotImg.style.display = 'block';
+                
+                // Display percentiles
+                const percentileBody = document.getElementById('percentile-body');
+                const percentileTable = document.getElementById('percentile-table');
+                percentileBody.innerHTML = '';
+                
+                for (const [percentile, price] of Object.entries(data.percentiles)) {
+                    const row = percentileBody.insertRow();
+                    const cell1 = row.insertCell(0);
+                    const cell2 = row.insertCell(1);
+                    cell1.textContent = percentile + '%';
+                    cell2.textContent = '$' + price.toFixed(2);
+                }
+                
+                percentileTable.style.display = 'table';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during simulation');
+            });
+        });
+    </script>
+</body>
+</html>
