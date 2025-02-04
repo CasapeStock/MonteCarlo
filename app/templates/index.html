@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Monte Carlo Stock Simulation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { 
+            background-color: #121212; 
+            color: #ffffff; 
+        }
+        .card {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h2 class="text-center mb-4">Monte Carlo Stock Simulation</h2>
+                        <form id="simulationForm">
+                            <div class="mb-3">
+                                <label class="form-label">Stock Ticker</label>
+                                <input type="text" class="form-control" id="tickerInput" placeholder="Enter stock ticker (e.g., AAPL)" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Risk Model</label>
+                                <select class="form-control" id="riskModelInput">
+                                    <option value="moderate" selected>Moderate (Balanced)</option>
+                                    <option value="conservative">Conservative (Low Risk)</option>
+                                    <option value="aggressive">Aggressive (High Risk)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="years">Simulation Years:</label>
+                                <select class="form-control" id="years" name="years">
+                                    <option value="1">1 Year</option>
+                                    <option value="3">3 Years</option>
+                                    <option value="5" selected>5 Years</option>
+                                    <option value="10">10 Years</option>
+                                    <option value="20">20 Years</option>
+                                    <option value="30">30 Years</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Simulate</button>
+                        </form>
+                        <div id="results" class="mt-4" style="display: none;">
+                            <h4>Simulation Results</h4>
+                            <img id="simulationGraph" class="img-fluid mb-3">
+                            <div id="simulationDetails" class="mt-3">
+                                <h5>Simulation Details</h5>
+                                <div class="result-summary">
+                                    <p><strong>Ticker:</strong> <span id="resultTicker"></span></p>
+                                    <p><strong>Risk Model:</strong> <span id="resultRiskModel"></span></p>
+                                    <p><strong>Simulation Years:</strong> <span id="resultYears"></span></p>
+                                    <p><strong>5-Year Analyst CAGR Estimate:</strong> <span id="analystCagrEstimate"></span></p>
+                                </div>
+                            </div>
+                            <div id="statisticalMetrics" class="mt-3">
+                                <h5 class="text-white">Statistical Metrics</h5>
+                                <table class="table table-dark table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Percentile</th>
+                                            <th>Final Price</th>
+                                            <th>CAGR (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>5th Percentile</td>
+                                            <td id="price5thPercentile"></td>
+                                            <td id="cagr5thPercentile"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>10th Percentile</td>
+                                            <td id="price10thPercentile"></td>
+                                            <td id="cagr10thPercentile"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>25th Percentile</td>
+                                            <td id="price25thPercentile"></td>
+                                            <td id="cagr25thPercentile"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>50th Percentile (Median)</td>
+                                            <td id="price50thPercentile"></td>
+                                            <td id="cagr50thPercentile"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>75th Percentile</td>
+                                            <td id="price75thPercentile"></td>
+                                            <td id="cagr75thPercentile"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>90th Percentile</td>
+                                            <td id="price90thPercentile"></td>
+                                            <td id="cagr90thPercentile"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>100th Percentile</td>
+                                            <td id="price100thPercentile"></td>
+                                            <td id="cagr100thPercentile"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                
+                                <h5 class="text-white">Overall Metrics</h5>
+                                <table class="table table-dark table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Metric</th>
+                                            <th>Final Price</th>
+                                            <th>CAGR (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Mean</td>
+                                            <td id="priceMean"></td>
+                                            <td id="cagrMean"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Median</td>
+                                            <td id="priceMedian"></td>
+                                            <td id="cagrMedian"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Standard Deviation</td>
+                                            <td id="priceStdDev"></td>
+                                            <td id="cagrStdDev"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="row text-center">
+                                <div class="col">
+                                    <strong>10th Percentile:</strong>
+                                    <p id="percentile10"></p>
+                                </div>
+                                <div class="col">
+                                    <strong>50th Percentile:</strong>
+                                    <p id="percentile50"></p>
+                                </div>
+                                <div class="col">
+                                    <strong>90th Percentile:</strong>
+                                    <p id="percentile90"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="stockDetails" class="mt-4" style="display: none;">
+                            <h4>Stock Details</h4>
+                            <div class="row text-center">
+                                <div class="col">
+                                    <strong>Company:</strong>
+                                    <p id="companyName"></p>
+                                </div>
+                                <div class="col">
+                                    <strong>Current Price:</strong>
+                                    <p id="currentPrice"></p>
+                                </div>
+                                <div class="col">
+                                    <strong>5-Year CAGR:</strong>
+                                    <p id="cagr5y"></p>
+                                </div>
+                                <div class="col">
+                                    <strong>Sector:</strong>
+                                    <p id="sector"></p>
+                                </div>
+                                <div class="col">
+                                    <strong>Market Cap:</strong>
+                                    <p id="marketCap"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="loadingSpinner" style="display: none;">
+                            <div class="text-center mt-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Running Monte Carlo Simulation...</p>
+                            </div>
+                        </div>
+                        <div id="errorMessage" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('simulationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const ticker = document.getElementById('tickerInput').value;
+            const riskModel = document.getElementById('riskModelInput').value;
+            const years = document.getElementById('years').value;
+            
+            // Get references to elements
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const resultsDiv = document.getElementById('results');
+            const errorDiv = document.getElementById('errorMessage');
+            
+            // Reset previous states
+            if (loadingSpinner) loadingSpinner.style.display = 'block';
+            if (resultsDiv) resultsDiv.style.display = 'none';
+            if (errorDiv) errorDiv.style.display = 'none';
+            
+            // Disable submit button during request
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            if (submitButton) submitButton.disabled = true;
+            
+            fetch('/simulate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `ticker=${ticker}&risk_model=${riskModel}&years=${years}`
+            })
+            .then(response => {
+                // Re-enable submit button
+                if (submitButton) submitButton.disabled = false;
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Hide loading spinner
+                if (loadingSpinner) loadingSpinner.style.display = 'none';
+                
+                // Check for error in response
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Set graph image
+                const simulationGraph = document.getElementById('simulationGraph');
+                if (simulationGraph && data.graphic) {
+                    simulationGraph.src = `data:image/png;base64,${data.graphic}`;
+                }
+                
+                // Update percentiles
+                const percentile10 = document.getElementById('percentile10');
+                const percentile50 = document.getElementById('percentile50');
+                const percentile90 = document.getElementById('percentile90');
+                
+                if (percentile10 && percentile50 && percentile90) {
+                    percentile10.textContent = `$${data.analysis.percentiles['10th'].toFixed(2)}`;
+                    percentile50.textContent = `$${data.analysis.percentiles['50th'].toFixed(2)}`;
+                    percentile90.textContent = `$${data.analysis.percentiles['90th'].toFixed(2)}`;
+                }
+                
+                // Update simulation details
+                const resultTicker = document.getElementById('resultTicker');
+                const resultRiskModel = document.getElementById('resultRiskModel');
+                const resultYears = document.getElementById('resultYears');
+                const analystCagrEstimate = document.getElementById('analystCagrEstimate');
+                
+                if (resultTicker) resultTicker.textContent = data.ticker;
+                if (resultRiskModel) resultRiskModel.textContent = data.risk_model;
+                if (resultYears) resultYears.textContent = `${data.years} Years`;
+                if (analystCagrEstimate) analystCagrEstimate.textContent = `${data.analyst_cagr_estimate}%`;
+                
+                // Update statistical metrics
+                const price5thPercentile = document.getElementById('price5thPercentile');
+                const cagr5thPercentile = document.getElementById('cagr5thPercentile');
+                const price10thPercentile = document.getElementById('price10thPercentile');
+                const cagr10thPercentile = document.getElementById('cagr10thPercentile');
+                const price25thPercentile = document.getElementById('price25thPercentile');
+                const cagr25thPercentile = document.getElementById('cagr25thPercentile');
+                const price50thPercentile = document.getElementById('price50thPercentile');
+                const cagr50thPercentile = document.getElementById('cagr50thPercentile');
+                const price75thPercentile = document.getElementById('price75thPercentile');
+                const cagr75thPercentile = document.getElementById('cagr75thPercentile');
+                const price90thPercentile = document.getElementById('price90thPercentile');
+                const cagr90thPercentile = document.getElementById('cagr90thPercentile');
+                const price100thPercentile = document.getElementById('price100thPercentile');
+                const cagr100thPercentile = document.getElementById('cagr100thPercentile');
+                const priceMean = document.getElementById('priceMean');
+                const cagrMean = document.getElementById('cagrMean');
+                const priceMedian = document.getElementById('priceMedian');
+                const cagrMedian = document.getElementById('cagrMedian');
+                const priceStdDev = document.getElementById('priceStdDev');
+                const cagrStdDev = document.getElementById('cagrStdDev');
+                
+                if (price5thPercentile) price5thPercentile.textContent = `$${data.metrics.percentiles['5th'].toFixed(2)}`;
+                if (cagr5thPercentile) cagr5thPercentile.textContent = `${data.metrics.cagr_percentiles['5th'].toFixed(2)}%`;
+                if (price10thPercentile) price10thPercentile.textContent = `$${data.metrics.percentiles['10th'].toFixed(2)}`;
+                if (cagr10thPercentile) cagr10thPercentile.textContent = `${data.metrics.cagr_percentiles['10th'].toFixed(2)}%`;
+                if (price25thPercentile) price25thPercentile.textContent = `$${data.metrics.percentiles['25th'].toFixed(2)}`;
+                if (cagr25thPercentile) cagr25thPercentile.textContent = `${data.metrics.cagr_percentiles['25th'].toFixed(2)}%`;
+                if (price50thPercentile) price50thPercentile.textContent = `$${data.metrics.percentiles['50th'].toFixed(2)}`;
+                if (cagr50thPercentile) cagr50thPercentile.textContent = `${data.metrics.cagr_percentiles['50th'].toFixed(2)}%`;
+                if (price75thPercentile) price75thPercentile.textContent = `$${data.metrics.percentiles['75th'].toFixed(2)}`;
+                if (cagr75thPercentile) cagr75thPercentile.textContent = `${data.metrics.cagr_percentiles['75th'].toFixed(2)}%`;
+                if (price90thPercentile) price90thPercentile.textContent = `$${data.metrics.percentiles['90th'].toFixed(2)}`;
+                if (cagr90thPercentile) cagr90thPercentile.textContent = `${data.metrics.cagr_percentiles['90th'].toFixed(2)}%`;
+                if (price100thPercentile) price100thPercentile.textContent = `$${data.metrics.percentiles['100th'].toFixed(2)}`;
+                if (cagr100thPercentile) cagr100thPercentile.textContent = `${data.metrics.cagr_percentiles['100th'].toFixed(2)}%`;
+                if (priceMean) priceMean.textContent = `$${data.metrics.mean.toFixed(2)}`;
+                if (cagrMean) cagrMean.textContent = `${data.metrics.cagr_mean.toFixed(2)}%`;
+                if (priceMedian) priceMedian.textContent = `$${data.metrics.median.toFixed(2)}`;
+                if (cagrMedian) cagrMedian.textContent = `${data.metrics.cagr_median.toFixed(2)}%`;
+                if (priceStdDev) priceStdDev.textContent = `$${data.metrics.std_dev.toFixed(2)}`;
+                if (cagrStdDev) cagrStdDev.textContent = `${data.metrics.cagr_std_dev.toFixed(2)}%`;
+                
+                // Show results
+                if (resultsDiv) resultsDiv.style.display = 'block';
+            })
+            .catch(error => {
+                // Show error message
+                console.error('Simulation Error:', error);
+                
+                // Hide loading spinner
+                if (loadingSpinner) loadingSpinner.style.display = 'none';
+                
+                // Re-enable submit button
+                if (submitButton) submitButton.disabled = false;
+                
+                // Display error message
+                if (errorDiv) {
+                    errorDiv.textContent = `Error: ${error.message}. Please try again.`;
+                    errorDiv.style.display = 'block';
+                } else {
+                    alert(`Simulation Error: ${error.message}`);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
