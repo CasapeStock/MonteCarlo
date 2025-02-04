@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+body {
+    background-color: black;
+    color: white;
+}
+.container.form-container {
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 30px;
+    margin-top: 50px;
+}
+.form-header h1 {
+    color: white;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.form-group label {
+    color: #ddd;
+}
+.form-control {
+    background-color: #222;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 4px;
+}
+.form-control:focus {
+    background-color: #333;
+    color: white;
+    border-color: #666;
+}
+.btn-primary {
+    background-color: #007bff;
+    border-color: #0056b3;
+}
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #003d80;
+}
+.form-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.form-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    width: 100%;
+}
+.form-group {
+    flex: 1;
+    margin-right: 10px;
+    max-width: 100%;
+}
+.form-group.full-width {
+    width: 100%;
+}
+.form-control {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.form-control[multiple], .form-control[size] {
+    height: auto;
+    min-height: 150px;
+}
+.form-control {
+    white-space: normal;
+    word-wrap: break-word;
+    text-overflow: clip;
+    overflow: visible;
+    line-height: 1.5;
+    padding: 10px;
+}
+.form-control option {
+    white-space: normal;
+    word-wrap: break-word;
+    text-overflow: clip;
+    overflow: visible;
+}
+.form-control {
+    white-space: normal;
+    word-wrap: break-word;
+    text-overflow: clip;
+    overflow: visible;
+    line-height: 2;
+    padding: 12px;
+    min-height: 50px;
+}
+.form-control option {
+    white-space: normal;
+    word-wrap: break-word;
+    text-overflow: clip;
+    overflow: visible;
+    padding: 8px;
+    min-height: 30px;
+}
+.form-control[multiple], .form-control[size] {
+    height: auto;
+    min-height: 200px;
+}
+.stock-entry-form {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 15px;
+    box-sizing: border-box;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container form-container">
+    <div class="form-header">
+        <h1>Stock Entry Form</h1>
+        <p>Fill out the details for a new stock entry</p>
+    </div>
+
+    <form method="POST" class="stock-entry-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="date">Date</label>
+                <input type="date" id="date" name="date" required 
+                       value="{{ current_date }}" 
+                       max="{{ max_date }}"
+                       class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="profile">Steel Profile</label>
+                <select id="profile" name="profile" required class="form-control" onchange="toggleCustomProfile()">
+                    <option value="">Select Steel Profile</option>
+                    
+                    {% for profile in steel_profiles %}
+                        <option value="{{ profile }}">{{ profile }}</option>
+                    {% endfor %}
+                    
+                    <option value="custom">Custom Profile</option>
+                </select>
+                
+                <!-- Custom Profile Input (Hidden by Default) -->
+                <input type="text" id="custom_profile" name="custom_profile" class="form-control mt-2" 
+                       placeholder="Enter custom profile name" style="display:none;" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="quantity">Quantity</label>
+                <input type="number" id="quantity" name="quantity" 
+                       min="1" max="1000" required 
+                       class="form-control"
+                       placeholder="Enter quantity">
+            </div>
+
+            <div class="form-group">
+                <label for="length">Length (mm)</label>
+                <input type="number" id="length" name="length" 
+                       step="1" min="10" max="20000" required 
+                       class="form-control"
+                       placeholder="Enter length in millimeters">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="steel_type">Steel Type</label>
+            <select name="steel_type" id="steel_type" class="form-control">
+                <option value="">All Steel Types</option>
+                
+                <!-- Structural Steels -->
+                <optgroup label="Structural Steels (EN 10025-2)">
+                    <option value="S235JR">S235 JR</option>
+                    <option value="S235J0">S235 J0</option>
+                    <option value="S235J2">S235 J2</option>
+                    <option value="S275JR">S275 JR</option>
+                    <option value="S275J0">S275 J0</option>
+                    <option value="S275J2">S275 J2</option>
+                    <option value="S355JR">S355 JR</option>
+                    <option value="S355J0">S355 J0</option>
+                    <option value="S355J2">S355 J2</option>
+                </optgroup>
+                
+                <!-- Weathering Steels -->
+                <optgroup label="Weathering Steels (EN 10025-5)">
+                    <option value="S235J0W">S235 J0W</option>
+                    <option value="S355J0WP">S355 J0WP</option>
+                    <option value="S355J2WP">S355 J2WP</option>
+                </optgroup>
+                
+                <!-- Normalized Steels -->
+                <optgroup label="Normalized Steels (EN 10025-3)">
+                    <option value="S275N">S275 N</option>
+                    <option value="S355N">S355 N</option>
+                    <option value="S420N">S420 N</option>
+                    <option value="S460N">S460 N</option>
+                </optgroup>
+                
+                <!-- Quenched and Tempered Steels -->
+                <optgroup label="Quenched and Tempered Steels (EN 10025-4)">
+                    <option value="S275Q">S275 Q</option>
+                    <option value="S355Q">S355 Q</option>
+                    <option value="S420Q">S420 Q</option>
+                    <option value="S460Q">S460 Q</option>
+                </optgroup>
+                
+                <!-- High Strength Low Alloy Steels -->
+                <optgroup label="High Strength Low Alloy Steels">
+                    <option value="S355M">S355 M</option>
+                    <option value="S420M">S420 M</option>
+                    <option value="S460M">S460 M</option>
+                </optgroup>
+                
+                <!-- Other option -->
+                <option value="Other">Other Steel Type</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="stock_reference">Stock Reference</label>
+            <input type="text" id="stock_reference" name="stock_reference" 
+                   required class="form-control"
+                   placeholder="Enter stock reference">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label for="work_number">Work Number</label>
+                <input type="text" id="work_number" name="work_number" 
+                       required class="form-control"
+                       placeholder="Enter work number">
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Submit Entry</button>
+            <button type="reset" class="btn btn-secondary">Reset Form</button>
+            <button type="button" onclick="toggleGreenBackground()" class="background-toggle">Toggle Green Background</button>
+        </div>
+    </form>
+
+    <div class="form-tips">
+        <h3>Tips for Accurate Entry</h3>
+        <ul>
+            <li>Ensure all required fields are filled</li>
+            <li>Double-check the steel profile and dimensions</li>
+            <li>Use the work number to track specific projects</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+function toggleCustomProfile() {
+    const profileSelect = document.getElementById('profile');
+    const customProfileInput = document.getElementById('custom_profile');
+    
+    if (profileSelect.value === 'custom') {
+        customProfileInput.style.display = 'block';
+        customProfileInput.required = true;
+    } else {
+        customProfileInput.style.display = 'none';
+        customProfileInput.required = false;
+        customProfileInput.value = '';
+    }
+}
+
+function toggleGreenBackground() {
+    const container = document.querySelector('.container.form-container');
+    container.classList.toggle('green-background');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('date').value = today;
+    document.getElementById('date').max = today;
+
+    // Form validation
+    const form = document.querySelector('.stock-entry-form');
+    form.addEventListener('submit', function(event) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+
+        requiredFields.forEach(field => {
+            if (!field.value) {
+                field.classList.add('error');
+                isValid = false;
+            } else {
+                field.classList.remove('error');
+            }
+        });
+
+        if (!isValid) {
+            event.preventDefault();
+            alert('Please fill out all required fields.');
+        }
+    });
+});
+</script>
+{% endblock %}
